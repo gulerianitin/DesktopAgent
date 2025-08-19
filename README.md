@@ -51,3 +51,39 @@ pip install -r requirements.txt
 
 # 3. Install Playwright dependencies
 playwright install
+
+## 📂 Project Structure
+
+```
+desktop-ai-agent/
+│
+├── agents/               # CrewAI agent definitions
+├── tools/                # File, shell, web automation tools
+├── data/                 # Logs, extracted data, scraped content
+├── utils/                # Common helper functions
+├── tests/                # Unit and integration tests
+│
+├── main.py               # Entry point
+├── requirements.txt
+├── .gitignore
+└── README.md
+```
+```
+
+---
+
+## 📈 Roadmap
+
+See [GitHub Issues](../../issues) for tasks.
+
+---
+
+## 🤝 Contributing
+
+This is a solo MVP, but feedback and ideas are welcome. Open an issue for discussions or feature requests.
+
+---
+
+
+
+
