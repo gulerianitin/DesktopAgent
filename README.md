@@ -57,8 +57,13 @@ playwright install
 ---
 
 ## 📂 Project Structure
+You're right — GitHub Markdown doesn’t render file trees well in preview unless formatted properly. Here's the fixed version using **code block with language hinting disabled**, ensuring it looks clean and aligned:
 
-```
+---
+
+## 📂 Project Structure
+
+
 desktop-ai-agent/
 │
 ├── agents/               # CrewAI agent definitions
@@ -71,7 +76,11 @@ desktop-ai-agent/
 ├── requirements.txt
 ├── .gitignore
 └── README.md
-```
+
+
+---
+
+You can copy and paste this directly into your `README.md`, and it will preview correctly on GitHub. Let me know if you'd like the `main.py` scaffold next.
 
 ---
 
