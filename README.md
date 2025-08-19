@@ -54,6 +54,10 @@ playwright install
 
 ## 📂 Project Structure
 
+---
+
+## 📂 Project Structure
+
 ```
 desktop-ai-agent/
 │
@@ -67,7 +71,6 @@ desktop-ai-agent/
 ├── requirements.txt
 ├── .gitignore
 └── README.md
-```
 ```
 
 ---
