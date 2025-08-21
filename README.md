@@ -39,18 +39,6 @@ This project is a proof-of-concept for a local AI desktop assistant that can hel
 
 
 
-## 🧪 Local Setup
-
-```bash
-# 1. Create virtual env
-python -m venv venv
-source venv/bin/activate  # or .\venv\Scripts\activate on Windows
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Install Playwright dependencies
-playwright install
 
 
 ## 📂 Project Structure
