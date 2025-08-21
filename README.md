@@ -55,19 +55,43 @@ playwright install
 
 ## 📂 Project Structure
 
-
-desktop-ai-agent/
-│
-├── agents/               # CrewAI agent definitions
-├── tools/                # File, shell, web automation tools
-├── data/                 # Logs, extracted data, scraped content
-├── utils/                # Common helper functions
-├── tests/                # Unit and integration tests
-│
-├── main.py               # Entry point
+desktop_agent/
+├── agents/
+│   ├── __init__.py
+│   └── file_organizer.py
+├── gui/
+│   ├── __init__.py
+│   └── app.py
+├── utils/
+│   ├── __init__.py
+│   └── claude_client.py
+├── .env
+├── agent.log
+├── main.py
 ├── requirements.txt
-├── .gitignore
 └── README.md
+
+## Organizing files in Downloads folder
+
+# Desktop File Organizer Agent
+
+Minimal Python desktop agent prototype that watches a folder and uses Claude LLM to organize files.
+
+## Features
+- Monitors a target folder for new files (polling every 10 seconds)
+- Dynamically prompts Claude LLM for file categorization
+- Moves files into categorized subfolders
+- Simple Tkinter GUI with logs and prompt editor
+- Logs actions to console and `agent.log`
+- Uses `.env` for config and secrets
+
+## Setup
+
+```bash
+python3 -m venv venv
+source venv/bin/activate      # Linux / WSL
+venv\Scripts\activate.bat     # Windows cmd
+pip install -r requirements.txt
 
 
 
