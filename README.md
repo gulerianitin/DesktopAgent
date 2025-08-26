@@ -1,96 +1,157 @@
-# 🧠 Desktop AI Agent (MVP)
+# 🧠 Desktop AI Agent
 
 A local-first intelligent assistant that can:
-- Organize files automatically
-- Execute shell commands from natural language
-- Follow web-based installation and troubleshooting instructions
-- Perform basic web automation (login and scraping)
-- Integrate these tasks into a CrewAI-based agent framework
+- **Organize files automatically** using Claude AI
+- **Execute shell commands** from natural language  
+- **Follow installation guides** step-by-step from URLs or text
+- **Monitor folders** and process files in real-time
+
+## ✅ Features Implemented
+
+- ✅ **File Organization** - Automatically categorizes and moves files
+- ✅ **Conversational Commands** - Natural language to shell command execution  
+- ✅ **Step-by-Step Guides** - Parse and execute installation/troubleshooting guides
+- ✅ **Real-time Monitoring** - Watch folders for new files
+- ✅ **GUI Interface** - Tkinter-based desktop application
+- ✅ **Safety Controls** - User confirmation, timeouts, comprehensive logging
 
 
 
-## 🚀 Project Goals
+## 🛠️ Tech Stack
 
-This project is a proof-of-concept for a local AI desktop assistant that can help automate common tasks with minimal human input. The long-term vision includes autonomous workflows, multi-agent collaboration, and persistent background tasks.
-
-
-
-## ✅ Features (Easy MVP Phase)
-
-- [x] **File Organizer Agent**  
-- [x] **Natural Language to Shell Executor**  
-- [x] **Step-by-Step Instruction Follower**  
-- [x] **Simple Web Automation Agent (Playwright)**  
-- [x] **CrewAI Agent Integration**
-
-
-
-## 🛠️ Tech Stack (Python)
-
-| Area                  | Library/Tool        |
-|-----------------------|---------------------|
-| Agent framework       | `crewai`            |
-| Language models       | `openai` (API) or `ollama` (local)  
-| Shell execution       | `subprocess`, `shlex`  
-| Folder monitoring     | `watchdog`  
-| Web automation        | `playwright` (Python)  
-| Logging/debugging     | `loguru`, `rich`  
-| Environment           | Python 3.10+, WSL2 with Ubuntu 22.04
+| Component | Technology |
+|-----------|------------|
+| **AI/LLM** | Claude Sonnet-4 API |
+| **GUI** | tkinter (Python native) |
+| **File Monitoring** | watchdog |
+| **Web Parsing** | requests + Claude AI |
+| **Environment** | Python 3.8+, WSL2 Ubuntu |
 
 
 
 
 
-## 📂 Project Structure
+## 📁 Project Structure
 
-desktop_agent/
+```
+DesktopAgent/
 ├── agents/
-│   ├── __init__.py
-│   └── file_organizer.py
+│   └── file_organizer.py    # File categorization logic
 ├── gui/
-│   ├── __init__.py
-│   └── app.py
+│   └── app.py               # Main GUI application  
 ├── utils/
-│   ├── __init__.py
-│   └── claude_client.py
-├── .env
-├── agent.log
-├── main.py
-├── requirements.txt
-└── README.md
+│   ├── claude_client.py     # Claude API integration
+│   ├── command_handler.py   # Natural language commands
+│   ├── guide_parser.py      # Installation guide parser
+│   └── guide_executor.py    # Step-by-step execution
+├── main.py                  # Application entry point
+├── requirements.txt         # Python dependencies
+└── .env                     # Configuration (API keys)
+```
 
-## Organizing files in Downloads folder
+## 🚀 Quick Start
 
-# Desktop File Organizer Agent
-
-Minimal Python desktop agent prototype that watches a folder and uses Claude LLM to organize files.
-
-## Features
-- Monitors a target folder for new files (polling every 10 seconds)
-- Dynamically prompts Claude LLM for file categorization
-- Moves files into categorized subfolders
-- Simple Tkinter GUI with logs and prompt editor
-- Logs actions to console and `agent.log`
-- Uses `.env` for config and secrets
-
-## Setup
-
+### Prerequisites
 ```bash
+# Ubuntu/WSL
+sudo apt-get install python3 python3-pip python3-tk python3-venv
+
+# Get Claude API key from https://console.anthropic.com
+```
+
+### Installation
+```bash
+# Clone repository
+git clone https://github.com/gulerianitin/DesktopAgent.git
+cd DesktopAgent
+
+# Create virtual environment
 python3 -m venv venv
-source venv/bin/activate      # Linux / WSL
-venv\Scripts\activate.bat     # Windows cmd
+source venv/bin/activate  # Linux/WSL
+# venv\Scripts\activate   # Windows
+
+# Install dependencies
 pip install -r requirements.txt
+```
+
+### Configuration
+```bash
+# Create .env file
+echo "CLAUDE_API_KEY=your_claude_api_key_here" > .env
+echo "WATCH_FOLDER=/path/to/folder/to/monitor" >> .env
+```
+
+### Usage
+```bash
+# Run the application
+python main.py
+```
+
+## 💡 How to Use
+
+### 1. File Organization
+- Files dropped in watch folder are automatically categorized
+- AI determines appropriate folder (Documents, Images, etc.)
+- Real-time monitoring with GUI feedback
+
+### 2. Conversational Commands
+```
+Type: "count pdf files in home directory"
+Result: find ~ -name "*.pdf" -type f | wc -l
+
+Type: "show disk usage"  
+Result: du -sh
+```
+
+### 3. Step-by-Step Guides
+- **Load from URL**: Paste installation guide URL
+- **Load from Text**: Copy/paste installation steps
+- **Execute**: Click through steps with confirmation
+- **Examples**: Docker installation, Node.js setup, etc.
 
 
 
-## 📈 Roadmap
+## 🔒 Safe Testing with Docker (Recommended)
 
-See [GitHub Issues](../../issues) for tasks.
+For testing installation guides that modify system packages, use Docker sandbox:
 
+### Docker Setup
+```bash
+# Pull Ubuntu image
+docker pull ubuntu:latest
+
+# Build sandbox container
+docker build -f Dockerfile.sandbox -t desktop-agent-sandbox .
+```
+
+### Safe Testing
+```bash
+# Run in isolated container
+./test-sandbox.sh
+
+# Or manually:
+docker run -it --rm \
+    -e DISPLAY=$DISPLAY \
+    -v "$(pwd)":/home/testuser/app \
+    desktop-agent-sandbox
+```
+
+### Why Use Docker?
+- ✅ **Complete Isolation** - No risk to host system
+- ✅ **Easy Reset** - Fresh environment for each test  
+- ✅ **GUI Support** - Applications display via WSLg
+- ✅ **Real Testing** - Authentic Ubuntu environment
+- ✅ **Professional Practice** - Industry standard for safe execution
+
+**Perfect for testing guides like:**
+- `sudo apt install` commands
+- System configuration changes  
+- Development environment setup
+- Database installations
 
 ## 🤝 Contributing
 
-This is a solo MVP, but feedback and ideas are welcome. Open an issue for discussions or feature requests.
+Feedback and ideas welcome! Open an issue for discussions or feature requests.
 
 
 
