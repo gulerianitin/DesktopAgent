@@ -2,6 +2,7 @@ anthropic==0.64.0
 python-dotenv==1.0.0
 loguru==0.7.2
 watchdog==3.0.0
+requests==2.31.0
 
 # Note: tkinter (python3-tk) must be installed via system package manager:
 # sudo apt-get install python3-tk
