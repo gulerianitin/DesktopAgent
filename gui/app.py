@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from agents.file_organizer import FileOrganizerAgent
 from utils.claude_client import ClaudeClient
+from utils.command_handler import ConversationalCommandHandler
 
 class DesktopAgentApp:
     def __init__(self, root: tk.Tk, watch_folder: str):
@@ -59,12 +60,27 @@ class DesktopAgentApp:
         # Status label
         self.status_label = tk.Label(self.root, text="Status: Stopped", fg="red")
         self.status_label.pack(pady=5)
+        
+        # Command input section
+        tk.Label(self.root, text="Conversational Commands:").pack(pady=(10, 0))
+        command_frame = tk.Frame(self.root)
+        command_frame.pack(pady=5, padx=10, fill=tk.X)
+        
+        self.command_entry = tk.Entry(command_frame, width=60)
+        self.command_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.command_entry.bind('<Return>', self.execute_command)
+        
+        self.execute_button = tk.Button(
+            command_frame, text="Execute", command=self.execute_command
+        )
+        self.execute_button.pack(side=tk.RIGHT, padx=(5, 0))
 
     def _setup_agent(self, watch_folder: str) -> None:
         """Initialize agent and client"""
         try:
             self.llm_client = ClaudeClient()
             self.agent = FileOrganizerAgent(watch_folder, self.llm_client, self.log)
+            self.command_handler = ConversationalCommandHandler(watch_folder)
             self.agent_prompt_template = self.prompt_text.get("1.0", tk.END).strip()
             self.log(f"Agent initialized for folder: {watch_folder}")
         except Exception as e:
@@ -102,6 +118,25 @@ class DesktopAgentApp:
             self.log("Prompt template updated")
         else:
             self.log("Invalid prompt template")
+    
+    def execute_command(self, event=None) -> None:
+        """Execute conversational command"""
+        command = self.command_entry.get().strip()
+        if not command:
+            return
+            
+        self.command_entry.delete(0, tk.END)
+        self.log(f"Executing: {command}")
+        
+        # Run command in thread to avoid blocking GUI
+        def run_command():
+            try:
+                result = self.command_handler.execute_conversational_command(command)
+                self.log(result)
+            except Exception as e:
+                self.log(f"Command error: {e}")
+        
+        threading.Thread(target=run_command, daemon=True).start()
 
     def toggle_monitoring(self) -> None:
         """Start/stop file monitoring"""
