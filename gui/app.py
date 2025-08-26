@@ -154,6 +154,7 @@ class DesktopAgentApp:
                         decision = future.result(timeout=30)  # 30 second timeout
                         if decision:
                             self.log(f"Claude decision:\n{decision}")
+                            self.log(f"DEBUG: Decision passed to agent: {repr(decision)}")
                             success = self.agent.act(decision)
                             if not success:
                                 self.log("No files were moved")

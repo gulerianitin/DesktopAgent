@@ -43,10 +43,15 @@ class ClaudeClient:
         
         lines = []
         for line in response.strip().split('\n'):
-            if '->' in line:
+            # Handle both '->' and '-' formats
+            if '->' in line or (' - ' in line and not line.strip().startswith('-')):
+                # Convert single dash to arrow format
+                if ' - ' in line and '->' not in line:
+                    line = line.replace(' - ', ' -> ')
+                
                 # Remove dangerous path characters
                 clean_line = re.sub(r'[.]{2,}|[<>:"|?*]', '', line)
-                # Ensure no absolute paths
+                # Ensure no absolute paths  
                 clean_line = re.sub(r'^[/\\]', '', clean_line)
                 lines.append(clean_line)
         

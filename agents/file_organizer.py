@@ -86,34 +86,50 @@ class FileOrganizerAgent:
     def act(self, decision_text: Optional[str]) -> bool:
         """Execute file organization decisions"""
         if not decision_text:
+            self.logger("DEBUG: No decision text provided")
             return False
             
+        self.logger(f"DEBUG: Processing decision text: '{decision_text}'")
         success_count = 0
         for line in decision_text.strip().splitlines():
-            if '->' not in line:
+            self.logger(f"DEBUG: Processing line: '{line}'")
+            # Handle both '->' and ' - ' formats
+            if '->' in line:
+                separator = '->'
+            elif ' - ' in line:
+                separator = ' - '
+            else:
+                self.logger(f"DEBUG: Skipping line without separator: '{line}'")
                 continue
                 
             try:
-                filename, folder = [s.strip() for s in line.split('->', 1)]
+                filename, folder = [s.strip() for s in line.split(separator, 1)]
+                self.logger(f"DEBUG: Parsed filename='{filename}', folder='{folder}'")
                 if self._move_file_safely(filename, folder):
                     success_count += 1
+                    self.logger(f"DEBUG: Successfully moved {filename}")
+                else:
+                    self.logger(f"DEBUG: Failed to move {filename}")
             except Exception as e:
                 self.logger(f"Error processing line '{line}': {e}")
         
+        self.logger(f"DEBUG: Total successful moves: {success_count}")
         return success_count > 0
     
     def _move_file_safely(self, filename: str, folder_name: str) -> bool:
         """Safely move file with validation"""
         try:
             src_path = self.watch_folder / filename
+            self.logger(f"DEBUG: Attempting to move '{filename}' from '{src_path}' to folder '{folder_name}'")
             
             # Validate source file exists
             if not src_path.exists() or not src_path.is_file():
-                self.logger(f"Source file not found: {filename}")
+                self.logger(f"Source file not found: {filename} (path: {src_path})")
                 return False
             
             # Sanitize and validate folder name
             clean_folder = self._sanitize_folder_name(folder_name)
+            self.logger(f"DEBUG: Sanitized folder name '{folder_name}' -> '{clean_folder}'")
             if not clean_folder:
                 self.logger(f"Invalid folder name: {folder_name}")
                 return False
