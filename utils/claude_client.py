@@ -17,7 +17,7 @@ class ClaudeClient:
         except Exception as e:
             raise ValueError(f"Failed to initialize Claude client: {e}")
     
-    def call(self, prompt: str) -> Optional[str]:
+    def call(self, prompt: str, sanitize: bool = True) -> Optional[str]:
         if not prompt or len(prompt.strip()) == 0:
             return None
             
@@ -30,7 +30,10 @@ class ClaudeClient:
             )
             
             response = message.content[0].text
-            return self._sanitize_response(response)
+            if sanitize:
+                return self._sanitize_response(response)
+            else:
+                return response.strip()
             
         except Exception as e:
             print(f"Claude API error: {e}")
