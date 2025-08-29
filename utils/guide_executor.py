@@ -164,10 +164,34 @@ class GuideExecutor:
         self.current_step_index += 1
         return {"success": True, "message": f"Step {current_step.step_number} skipped"}
     
-    def _execute_command(self, command: str) -> Dict[str, Any]:
+    def next_step(self) -> bool:
+        """Navigate to next step without executing"""
+        if self.current_step_index < len(self.steps) - 1:
+            self.current_step_index += 1
+            return True
+        return False
+    
+    def prev_step(self) -> bool:
+        """Navigate to previous step"""
+        if self.current_step_index > 0:
+            self.current_step_index -= 1
+            return True
+        return False
+    
+    def _execute_command(self, command: str, sudo_password: str = None) -> Dict[str, Any]:
         """Execute a shell command safely"""
         try:
             self.logger(f"🔧 Running command: {command}")
+            
+            # Handle sudo commands with non-interactive flags
+            if command.strip().startswith('sudo'):
+                # Add non-interactive flags for apt commands
+                if 'apt install' in command and '-y' not in command:
+                    command = command.replace('apt install', 'apt install -y')
+                if 'apt update' in command:
+                    command = f"DEBIAN_FRONTEND=noninteractive {command}"
+                if 'apt install' in command:
+                    command = f"DEBIAN_FRONTEND=noninteractive {command}"
             
             result = subprocess.run(
                 command,
@@ -175,12 +199,17 @@ class GuideExecutor:
                 cwd=str(self.work_directory),
                 capture_output=True,
                 text=True,
-                timeout=60  # 1 minute timeout
+                timeout=300  # 5 minute timeout for installations
             )
+            
+            # Log detailed command info
+            self.logger(f"🔍 Command: '{command}' | Return code: {result.returncode}")
+            self.logger(f"🔍 Stdout: {result.stdout[:300] if result.stdout else '(empty)'}")
+            self.logger(f"🔍 Stderr: {result.stderr[:300] if result.stderr else '(empty)'}")
             
             if result.returncode == 0:
                 output = result.stdout.strip()
-                self.logger(f"✅ Command successful: {output[:200]}...")
+                self.logger(f"✅ Command successful")
                 return {
                     "success": True,
                     "message": "Command executed successfully",
@@ -189,7 +218,7 @@ class GuideExecutor:
                 }
             else:
                 error = result.stderr.strip()
-                self.logger(f"❌ Command failed: {error[:200]}...")
+                self.logger(f"❌ Command failed with return code {result.returncode}")
                 return {
                     "success": False,
                     "message": f"Command failed with return code {result.returncode}",
