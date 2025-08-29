@@ -1,10 +1,13 @@
 # 🧠 Desktop AI Agent
 
-A local-first intelligent assistant that can:
+**Open Source AI Desktop Assistant for Linux** 🐧
+
+A privacy-focused, local-first intelligent assistant designed for Ubuntu/XFCE that can:
 - **Organize files automatically** using Claude AI
 - **Execute shell commands** from natural language  
 - **Follow installation guides** step-by-step from URLs or text
 - **Monitor folders** and process files in real-time
+- **Safe Docker testing** with GUI application support
 
 ## ✅ Features Implemented
 
@@ -25,7 +28,7 @@ A local-first intelligent assistant that can:
 | **GUI** | tkinter (Python native) |
 | **File Monitoring** | watchdog |
 | **Web Parsing** | requests + Claude AI |
-| **Environment** | Python 3.8+, WSL2 Ubuntu |
+| **Environment** | Ubuntu 20.04+, XFCE/GNOME/KDE |
 
 
 
@@ -51,27 +54,23 @@ DesktopAgent/
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### One-Line Installation (Ubuntu)
 ```bash
-# Ubuntu/WSL
-sudo apt-get install python3 python3-pip python3-tk python3-venv
-
-# Get Claude API key from https://console.anthropic.com
+curl -fsSL https://raw.githubusercontent.com/gulerianitin/DesktopAgent/main/install-ubuntu.sh | bash
 ```
 
-### Installation
+### Manual Installation
 ```bash
-# Clone repository
+# Prerequisites
+sudo apt update && sudo apt install -y python3 python3-pip python3-tk python3-venv git docker.io
+
+# Clone repository  
 git clone https://github.com/gulerianitin/DesktopAgent.git
 cd DesktopAgent
 
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate  # Linux/WSL
-# venv\Scripts\activate   # Windows
-
-# Install dependencies
-pip install -r requirements.txt
+# Run installation script
+chmod +x install-ubuntu.sh
+./install-ubuntu.sh
 ```
 
 ### Configuration
@@ -81,9 +80,15 @@ echo "CLAUDE_API_KEY=your_claude_api_key_here" > .env
 echo "WATCH_FOLDER=/path/to/folder/to/monitor" >> .env
 ```
 
-### Usage
+### Launch Application
 ```bash
-# Run the application
+# Method 1: From applications menu (after installation)
+# Search for "Desktop Agent" in your application launcher
+
+# Method 2: Command line
+desktop-agent
+
+# Method 3: Direct execution
 python main.py
 ```
 
