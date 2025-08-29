@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Desktop Agent
+Comment=AI-powered desktop assistant for file organization and system automation
+Exec=python3 /opt/desktop-agent/main.py
+Icon=/opt/desktop-agent/assets/icon.png
+Terminal=false
+StartupNotify=true
+Categories=Utility;System;FileManager;Office;
+Keywords=ai;assistant;automation;files;claude;organization;
+StartupWMClass=Desktop Agent
+MimeType=inode/directory;
