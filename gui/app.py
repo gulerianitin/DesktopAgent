@@ -28,8 +28,9 @@ class DesktopAgentApp:
     def _setup_ui(self) -> None:
         """Initialize UI components"""
         # Logging widget
-        self.log_text = ScrolledText(self.root, width=80, height=20, state='disabled')
+        self.log_text = ScrolledText(self.root, width=80, height=20, state='normal')
         self.log_text.pack(padx=10, pady=10)
+        self.log_text.bind("<Key>", self._handle_log_key)  # Read-only but allow copy
 
         # Prompt editor
         tk.Label(self.root, text="Edit Prompt Template:").pack(pady=(10, 0))
@@ -92,6 +93,14 @@ class DesktopAgentApp:
         )
         self.load_guide_button.pack(side=tk.LEFT, padx=(5, 0))
         
+        # Sudo password (for Docker)
+        sudo_frame = tk.Frame(self.root)
+        sudo_frame.pack(pady=5, padx=10, fill=tk.X)
+        
+        tk.Label(sudo_frame, text="Docker Sudo (leave empty - passwordless):").pack(side=tk.LEFT)
+        self.sudo_password_entry = tk.Entry(sudo_frame, width=15, show="*")
+        self.sudo_password_entry.pack(side=tk.LEFT, padx=(5, 0))
+        
         # Guide control buttons
         guide_control_frame = tk.Frame(self.root)
         guide_control_frame.pack(pady=5, padx=10, fill=tk.X)
@@ -99,15 +108,25 @@ class DesktopAgentApp:
         self.step_info_label = tk.Label(guide_control_frame, text="No guide loaded", fg="gray")
         self.step_info_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
+        self.execute_all_button = tk.Button(
+            guide_control_frame, text="Execute All", command=self.execute_all_steps, state='disabled'
+        )
+        self.execute_all_button.pack(side=tk.RIGHT, padx=(5, 0))
+        
         self.execute_step_button = tk.Button(
             guide_control_frame, text="Execute Step", command=self.execute_step, state='disabled'
         )
         self.execute_step_button.pack(side=tk.RIGHT, padx=(5, 0))
         
-        self.skip_step_button = tk.Button(
-            guide_control_frame, text="Skip Step", command=self.skip_step, state='disabled'
+        self.next_step_button = tk.Button(
+            guide_control_frame, text="Next", command=self.next_step, state='disabled'
         )
-        self.skip_step_button.pack(side=tk.RIGHT, padx=(5, 0))
+        self.next_step_button.pack(side=tk.RIGHT, padx=(5, 0))
+        
+        self.prev_step_button = tk.Button(
+            guide_control_frame, text="Previous", command=self.prev_step, state='disabled'
+        )
+        self.prev_step_button.pack(side=tk.RIGHT, padx=(5, 0))
 
     def _setup_agent(self, watch_folder: str) -> None:
         """Initialize agent and client"""
@@ -129,10 +148,8 @@ class DesktopAgentApp:
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
             full_message = f"{timestamp} | {message}\n"
             
-            self.log_text.config(state='normal')
             self.log_text.insert(tk.END, full_message)
             self.log_text.see(tk.END)
-            self.log_text.config(state='disabled')
             
             print(full_message.strip())
             
@@ -173,6 +190,16 @@ class DesktopAgentApp:
                 self.log(f"Command error: {e}")
         
         threading.Thread(target=run_command, daemon=True).start()
+    
+    def _handle_log_key(self, event) -> str:
+        """Allow copy operations but prevent editing"""
+        # Allow Ctrl+C, Ctrl+A, and arrow keys
+        if event.state & 0x4:  # Ctrl key pressed
+            if event.keysym in ('c', 'a', 'C', 'A'):
+                return None  # Allow copy and select all
+        if event.keysym in ('Up', 'Down', 'Left', 'Right', 'Home', 'End', 'Prior', 'Next'):
+            return None  # Allow navigation
+        return "break"  # Block other keys
     
     def _clear_guide_placeholder(self, event) -> None:
         """Clear placeholder text when guide entry is focused"""
@@ -244,14 +271,43 @@ class DesktopAgentApp:
         
         threading.Thread(target=execute_async, daemon=True).start()
     
-    def skip_step(self) -> None:
-        """Skip current step"""
-        step_info = self.guide_executor.get_step_info()
-        if step_info.get("completed"):
-            return
+    def execute_all_steps(self) -> None:
+        """Execute all remaining steps sequentially"""
+        def execute_async():
+            try:
+                while not self.guide_executor.get_step_info().get("completed"):
+                    step_info = self.guide_executor.get_step_info()
+                    self.log(f"⚡ Auto-executing step {step_info['step_number']}: {step_info['description']}")
+                    
+                    result = self.guide_executor.execute_current_step(user_confirmed=True)
+                    
+                    if result["success"]:
+                        self.log(f"✅ Step completed: {result['message']}")
+                        if result.get("output"):
+                            self.log(f"Output: {result['output'][:500]}...")
+                    else:
+                        self.log(f"❌ Step failed: {result['message']}")
+                        break  # Stop on failure
+                    
+                    # Update UI
+                    self.root.after(0, self._update_guide_ui)
+                    time.sleep(1)  # Brief pause between steps
+                
+                self.log("🎉 All steps completed!")
+                
+            except Exception as e:
+                self.log(f"❌ Error in execute all: {e}")
         
-        result = self.guide_executor.skip_current_step("User requested skip")
-        self.log(f"⏭️ {result['message']}")
+        threading.Thread(target=execute_async, daemon=True).start()
+    
+    def next_step(self) -> None:
+        """Navigate to next step without executing"""
+        self.guide_executor.next_step()
+        self._update_guide_ui()
+    
+    def prev_step(self) -> None:
+        """Navigate to previous step"""  
+        self.guide_executor.prev_step()
         self._update_guide_ui()
     
     def _update_guide_ui(self) -> None:
@@ -261,7 +317,9 @@ class DesktopAgentApp:
         if step_info.get("completed"):
             self.step_info_label.config(text="🎉 Guide completed!", fg="green")
             self.execute_step_button.config(state='disabled')
-            self.skip_step_button.config(state='disabled')
+            self.execute_all_button.config(state='disabled')
+            self.next_step_button.config(state='disabled')
+            self.prev_step_button.config(state='disabled')
         else:
             # Show current step info
             step_text = f"Step {step_info['progress']}: {step_info['description'][:60]}..."
@@ -270,7 +328,9 @@ class DesktopAgentApp:
             
             self.step_info_label.config(text=step_text, fg="blue")
             self.execute_step_button.config(state='normal')
-            self.skip_step_button.config(state='normal')
+            self.execute_all_button.config(state='normal')
+            self.next_step_button.config(state='normal')
+            self.prev_step_button.config(state='normal')
 
     def toggle_monitoring(self) -> None:
         """Start/stop file monitoring"""

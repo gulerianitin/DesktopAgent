@@ -106,8 +106,9 @@ Result: du -sh
 ### 3. Step-by-Step Guides
 - **Load from URL**: Paste installation guide URL
 - **Load from Text**: Copy/paste installation steps
-- **Execute**: Click through steps with confirmation
-- **Examples**: Docker installation, Node.js setup, etc.
+- **Execute**: Click through steps with confirmation or "Execute All"
+- **Docker Integration**: Use `docker exec container_name command` for safe testing
+- **Examples**: VLC installation, Docker setup, Node.js installation, etc.
 
 
 
@@ -144,10 +145,11 @@ docker run -it --rm \
 - ✅ **Professional Practice** - Industry standard for safe execution
 
 **Perfect for testing guides like:**
-- `sudo apt install` commands
+- `sudo apt install` commands (VLC, Docker, Node.js, etc.)
 - System configuration changes  
 - Development environment setup
 - Database installations
+- X11 applications with GUI forwarding to Windows
 
 ## 🤝 Contributing
 
