@@ -1,5 +1,12 @@
 # Desktop Agent TODO - Linux MVP Roadmap
 
+## 🎯 GitHub Issues Status
+- ✅ Issue 1: File Organizer Agent - Watch & Sort Files (COMPLETED)
+- ✅ Issue 2: Natural Language to Shell Command Executor (COMPLETED) 
+- ⏳ Issue 3: Step-by-Step Online Instruction Follower
+- ⏳ Issue 4: Simple Web Automation - Login & Data Scraping
+- ⏳ Issue 5: Basic Agent Framework Integration with CrewAI
+
 ## 🎯 Current Status: MVP Analysis
 
 ### Core Strengths

@@ -18,7 +18,7 @@ class ConversationalCommandHandler:
 Context: Working directory is {self.watch_folder}
 
 Return ONLY the shell command, no explanation. Examples:
-"find the number of images in the images folder" -> find Images -type f \( -iname "*.jpg" -o -iname "*.png" -o -iname "*.gif" -o -iname "*.bmp" \) | wc -l
+"find the number of images in the images folder" -> find Images -type f \\( -iname "*.jpg" -o -iname "*.png" -o -iname "*.gif" -o -iname "*.bmp" \\) | wc -l
 "check disk usage" -> du -sh
 "list recent files" -> ls -lt | head -10
 "show folder sizes" -> du -h --max-depth=1 | sort -hr
