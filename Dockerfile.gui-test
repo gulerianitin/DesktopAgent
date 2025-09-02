@@ -1,0 +1,50 @@
+# Dockerfile for GUI testing with VLC example
+FROM ubuntu:22.04
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install essential packages + VLC
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    python3-tk \
+    curl \
+    wget \
+    sudo \
+    git \
+    nano \
+    vlc \
+    x11-apps \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create test user
+RUN useradd -m -s /bin/bash testuser && \
+    echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements and create virtual environment
+COPY requirements.txt .
+RUN python3 -m venv /app/venv && \
+    /app/venv/bin/pip install --upgrade pip && \
+    /app/venv/bin/pip install -r requirements.txt
+
+# Copy application files
+COPY --chown=testuser:testuser . .
+
+# Switch to test user
+USER testuser
+WORKDIR /home/testuser/app
+
+# Copy app files to user directory
+COPY --chown=testuser:testuser . .
+
+# Set environment variables for GUI
+ENV DISPLAY=:0
+ENV PATH="/app/venv/bin:$PATH"
+
+# Default command
+CMD ["/bin/bash"]
