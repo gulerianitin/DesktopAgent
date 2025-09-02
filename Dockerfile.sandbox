@@ -17,9 +17,8 @@ RUN apt-get update && apt-get install -y \
     nano \
     && rm -rf /var/lib/apt/lists/*
 
-# Create test user (not root for safety)
-RUN useradd -m -s /bin/bash testuser && \
-    echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+# Create test user with restricted privileges for security
+RUN useradd -m -s /bin/bash testuser
 
 # Set working directory
 WORKDIR /app

@@ -1,12 +1,16 @@
 import subprocess
 import os
+import logging
 from typing import Optional
 from .claude_client import ClaudeClient
+from .security import SecureCommandExecutor, SecurityError
 
 class ConversationalCommandHandler:
     def __init__(self, watch_folder: str):
         self.watch_folder = watch_folder
         self.claude_client = ClaudeClient()
+        self.secure_executor = SecureCommandExecutor(work_directory=watch_folder, allowed_sudo=False)
+        self.logger = logging.getLogger(__name__)
     
     def execute_conversational_command(self, natural_command: str) -> Optional[str]:
         """Convert natural language to shell command and execute it"""
@@ -32,23 +36,20 @@ Shell command:"""
             # Clean the response
             shell_command = shell_command.strip().replace('```', '').replace('bash', '').strip()
             
-            # Execute the shell command
-            result = subprocess.run(
-                shell_command, 
-                shell=True, 
-                cwd=self.watch_folder,
-                capture_output=True, 
-                text=True,
-                timeout=30
-            )
-            
-            if result.returncode == 0:
-                output = result.stdout.strip()
-                return f"Command: {shell_command}\nResult:\n{output}" if output else f"Command executed: {shell_command}"
-            else:
-                return f"Command failed: {shell_command}\nError: {result.stderr.strip()}"
+            # Execute the shell command securely
+            try:
+                result = self.secure_executor.execute_command(shell_command, timeout=30)
                 
-        except subprocess.TimeoutExpired:
-            return "Command timed out after 30 seconds"
+                if result['success']:
+                    output = result['stdout'].strip()
+                    return f"Command: {shell_command}\nResult:\n{output}" if output else f"Command executed: {shell_command}"
+                else:
+                    return f"Command failed: {shell_command}\nError: {result['stderr'].strip()}"
+                    
+            except SecurityError as e:
+                self.logger.warning(f"Security violation blocked: {e}")
+                return f"Command blocked for security reasons: {e}"
+                
         except Exception as e:
+            self.logger.error(f"Command execution error: {e}")
             return f"Error executing command: {e}"

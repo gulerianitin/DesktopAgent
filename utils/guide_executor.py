@@ -1,10 +1,12 @@
 import subprocess
 import json
 import time
+import logging
 from datetime import datetime
 from typing import List, Callable, Optional, Dict, Any
 from pathlib import Path
 from .guide_parser import Step
+from .security import SecureCommandExecutor, SecurityError
 
 class GuideExecutor:
     def __init__(self, work_directory: str, logger: Callable[[str], None]):
@@ -14,6 +16,8 @@ class GuideExecutor:
         self.steps: List[Step] = []
         self.current_step_index = 0
         self.guide_log = []
+        self.secure_executor = SecureCommandExecutor(work_directory=str(work_directory), allowed_sudo=True)
+        self.security_logger = logging.getLogger(__name__)
         
     def load_guide(self, steps: List[Step], guide_name: str = "Guide") -> None:
         """Load a guide with steps to execute"""
@@ -193,37 +197,47 @@ class GuideExecutor:
                 if 'apt install' in command:
                     command = f"DEBIAN_FRONTEND=noninteractive {command}"
             
-            result = subprocess.run(
-                command,
-                shell=True,
-                cwd=str(self.work_directory),
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout for installations
-            )
+            # Execute command securely
+            try:
+                result = self.secure_executor.execute_command(command, timeout=300)
+                
+                # Log sanitized command info (security-aware logging)
+                self.logger(f"🔍 Command executed | Return code: {result['returncode']}")
+                if result['stdout']:
+                    # Sanitize output for logging
+                    clean_stdout = self.secure_executor._sanitize_for_logging(result['stdout'])
+                    self.logger(f"🔍 Output: {clean_stdout[:300]}")
+                if result['stderr']:
+                    clean_stderr = self.secure_executor._sanitize_for_logging(result['stderr'])
+                    self.logger(f"🔍 Error: {clean_stderr[:300]}")
+                    
+            except SecurityError as e:
+                self.security_logger.warning(f"Command blocked by security: {e}")
+                return {
+                    'returncode': -1,
+                    'stdout': '',
+                    'stderr': f"Security violation: {e}",
+                    'command': command,
+                    'success': False,
+                    'execution_time': 0,
+                    'timestamp': datetime.now().isoformat()
+                }
             
-            # Log detailed command info
-            self.logger(f"🔍 Command: '{command}' | Return code: {result.returncode}")
-            self.logger(f"🔍 Stdout: {result.stdout[:300] if result.stdout else '(empty)'}")
-            self.logger(f"🔍 Stderr: {result.stderr[:300] if result.stderr else '(empty)'}")
-            
-            if result.returncode == 0:
-                output = result.stdout.strip()
+            if result['success']:
                 self.logger(f"✅ Command successful")
                 return {
                     "success": True,
                     "message": "Command executed successfully",
-                    "output": output,
-                    "return_code": result.returncode
+                    "output": result['stdout'],
+                    "return_code": result['returncode']
                 }
             else:
-                error = result.stderr.strip()
-                self.logger(f"❌ Command failed with return code {result.returncode}")
+                self.logger(f"❌ Command failed with return code {result['returncode']}")
                 return {
                     "success": False,
-                    "message": f"Command failed with return code {result.returncode}",
-                    "output": error,
-                    "return_code": result.returncode
+                    "message": f"Command failed with return code {result['returncode']}",
+                    "output": result['stderr'],
+                    "return_code": result['returncode']
                 }
                 
         except subprocess.TimeoutExpired:

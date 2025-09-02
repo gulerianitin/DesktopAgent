@@ -1,8 +1,10 @@
 import requests
 import re
+import logging
 from typing import List, Dict, Optional, Tuple
 from urllib.parse import urlparse
 from .claude_client import ClaudeClient
+from .security import SecureURLValidator, SecurityError
 
 class Step:
     def __init__(self, step_number: int, description: str, command: Optional[str] = None, 
@@ -18,15 +20,38 @@ class Step:
 class GuideParser:
     def __init__(self):
         self.claude_client = ClaudeClient()
+        self.logger = logging.getLogger(__name__)
     
     def parse_url(self, url: str) -> List[Step]:
         """Parse installation/troubleshooting steps from a URL"""
         try:
-            # Fetch webpage content
-            response = requests.get(url, timeout=30, headers={
-                'User-Agent': 'Mozilla/5.0 (Linux; Desktop Agent Guide Parser)'
-            })
+            # Validate URL for security
+            SecureURLValidator.validate_url(url)
+            
+            # Fetch webpage content securely
+            response = requests.get(
+                url, 
+                timeout=30, 
+                headers={'User-Agent': 'Mozilla/5.0 (Linux; Desktop Agent Guide Parser)'},
+                verify=True,  # Verify SSL certificates
+                allow_redirects=False,  # Don't follow redirects automatically
+                stream=False
+            )
             response.raise_for_status()
+            
+            # Limit response size to prevent DoS
+            if len(response.content) > 10 * 1024 * 1024:  # 10MB limit
+                raise SecurityError("Response too large (>10MB)")
+                
+        except SecurityError as e:
+            self.logger.warning(f"URL security validation failed: {e}")
+            raise
+        except requests.exceptions.SSLError as e:
+            self.logger.error(f"SSL certificate verification failed for {url}: {e}")
+            raise SecurityError(f"SSL verification failed: {e}")
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"Network request failed for {url}: {e}")
+            raise SecurityError(f"Network request failed: {e}")
             
             # Extract steps using Claude
             prompt = f"""Extract installation or troubleshooting steps from this webpage content.
