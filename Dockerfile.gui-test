@@ -19,9 +19,8 @@ RUN apt-get update && apt-get install -y \
     x11-apps \
     && rm -rf /var/lib/apt/lists/*
 
-# Create test user
-RUN useradd -m -s /bin/bash testuser && \
-    echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+# Create test user with restricted privileges for security
+RUN useradd -m -s /bin/bash testuser
 
 # Set working directory
 WORKDIR /app
