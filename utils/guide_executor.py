@@ -183,34 +183,40 @@ class GuideExecutor:
         return False
     
     def _execute_command(self, command: str, sudo_password: str = None) -> Dict[str, Any]:
-        """Execute a shell command safely"""
+        """Execute a shell command safely with real-time progress output"""
         try:
             self.logger(f"🔧 Running command: {command}")
-            
+
             # Handle sudo commands with non-interactive flags
             if command.strip().startswith('sudo'):
-                # Add non-interactive flags for apt commands
+                # Add -y flag for apt install if not present
+                if 'apt-get install' in command and '-y' not in command:
+                    command = command.replace('apt-get install', 'apt-get install -y')
                 if 'apt install' in command and '-y' not in command:
                     command = command.replace('apt install', 'apt install -y')
-                if 'apt update' in command:
-                    command = f"DEBIAN_FRONTEND=noninteractive {command}"
-                if 'apt install' in command:
-                    command = f"DEBIAN_FRONTEND=noninteractive {command}"
-            
+
+            # Check if this is an apt command that would benefit from progress display
+            is_apt_command = any(x in command for x in ['apt-get', 'apt install', 'apt update', 'apt upgrade'])
+
             # Execute command securely
             try:
-                result = self.secure_executor.execute_command(command, timeout=300)
-                
+                if is_apt_command:
+                    # Execute with real-time output for apt commands
+                    result = self._execute_with_progress(command)
+                else:
+                    # Execute normally for other commands
+                    result = self.secure_executor.execute_command(command, timeout=300)
+
                 # Log sanitized command info (security-aware logging)
                 self.logger(f"🔍 Command executed | Return code: {result['returncode']}")
-                if result['stdout']:
-                    # Sanitize output for logging
+                if result.get('stdout') and not is_apt_command:
+                    # Sanitize output for logging (skip for apt - already logged)
                     clean_stdout = self.secure_executor._sanitize_for_logging(result['stdout'])
                     self.logger(f"🔍 Output: {clean_stdout[:300]}")
-                if result['stderr']:
+                if result.get('stderr') and not is_apt_command:
                     clean_stderr = self.secure_executor._sanitize_for_logging(result['stderr'])
                     self.logger(f"🔍 Error: {clean_stderr[:300]}")
-                    
+
             except SecurityError as e:
                 self.security_logger.warning(f"Command blocked by security: {e}")
                 return {
@@ -222,7 +228,7 @@ class GuideExecutor:
                     'execution_time': 0,
                     'timestamp': datetime.now().isoformat()
                 }
-            
+
             if result['success']:
                 self.logger(f"✅ Command successful")
                 return {
@@ -239,7 +245,7 @@ class GuideExecutor:
                     "output": result['stderr'],
                     "return_code": result['returncode']
                 }
-                
+
         except subprocess.TimeoutExpired:
             return {
                 "success": False,
@@ -252,6 +258,69 @@ class GuideExecutor:
                 "message": f"Error executing command: {e}",
                 "output": str(e)
             }
+
+    def _execute_with_progress(self, command: str) -> Dict[str, Any]:
+        """Execute command and show real-time download progress"""
+        import re
+
+        start_time = time.time()
+        process = subprocess.Popen(
+            ['/bin/bash', '-c', command],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            env={
+                'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+                'DEBIAN_FRONTEND': 'noninteractive',
+                'DISPLAY': ':1'
+            }
+        )
+
+        full_output = []
+        last_progress_line = None
+
+        # Pattern to match apt download progress
+        progress_pattern = re.compile(r'(Get|Fetched|Reading|Building|Unpacking|Setting up|Processing):.*')
+        percentage_pattern = re.compile(r'(\d+)%')
+
+        for line in iter(process.stdout.readline, ''):
+            if not line:
+                break
+
+            line = line.rstrip()
+            full_output.append(line)
+
+            # Check if this is a progress line
+            if progress_pattern.search(line):
+                # Show package download/install progress
+                if 'Get:' in line or 'Fetched' in line:
+                    self.logger(f"📥 {line}")
+                elif 'Unpacking' in line or 'Setting up' in line:
+                    self.logger(f"📦 {line}")
+                elif 'Reading' in line or 'Building' in line:
+                    # Only show these occasionally to avoid spam
+                    if last_progress_line != line[:30]:
+                        self.logger(f"⚙️  {line}")
+                        last_progress_line = line[:30]
+            elif percentage_pattern.search(line):
+                # Show percentage updates
+                self.logger(f"⏳ {line}")
+
+        process.wait()
+        execution_time = time.time() - start_time
+
+        output = '\n'.join(full_output)
+
+        return {
+            'returncode': process.returncode,
+            'stdout': output,
+            'stderr': '',
+            'command': command,
+            'success': process.returncode == 0,
+            'execution_time': execution_time,
+            'timestamp': datetime.now().isoformat()
+        }
     
     def _log_guide_event(self, event_type: str, data: Dict[str, Any]) -> None:
         """Log guide execution events"""
@@ -273,14 +342,23 @@ class GuideExecutor:
     def get_guide_summary(self) -> Dict[str, Any]:
         """Get summary of guide execution"""
         completed_steps = len([s for s in self.steps if s.completed])
+        successful_steps = len([s for s in self.steps if s.completed and s.result and s.result.get("success", False)])
         failed_steps = len([s for s in self.steps if s.completed and s.result and not s.result.get("success", True)])
-        
+
+        # Calculate success rate based on successful steps vs completed steps
+        if completed_steps > 0:
+            success_rate = (successful_steps / completed_steps * 100)
+        else:
+            success_rate = 0
+
         return {
             "guide_name": self.current_guide,
             "total_steps": len(self.steps),
             "completed_steps": completed_steps,
+            "successful_steps": successful_steps,
             "failed_steps": failed_steps,
             "progress_percentage": (completed_steps / len(self.steps) * 100) if self.steps else 100,
+            "success_rate": success_rate,  # NEW: actual success rate
             "is_completed": completed_steps == len(self.steps),
             "current_step": self.current_step_index + 1 if self.current_step_index < len(self.steps) else None
         }

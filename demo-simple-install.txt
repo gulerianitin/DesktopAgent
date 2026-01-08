@@ -1,0 +1,48 @@
+GUI Applications Installation Demo
+====================================
+
+This guide installs popular GUI applications that you can see and launch.
+Installs: GIMP, Inkscape, LibreOffice, VLC, VS Code
+
+Step 1: Update package lists
+sudo apt-get update
+
+Step 2: Install GIMP image editor
+sudo apt-get install -y gimp
+
+Step 3: Install Inkscape vector graphics editor
+sudo apt-get install -y inkscape
+
+Step 4: Install LibreOffice suite
+sudo apt-get install -y libreoffice
+
+Step 5: Install VLC media player
+sudo apt-get install -y vlc
+
+Step 6: Install build essentials for VS Code
+sudo apt-get install -y wget gpg apt-transport-https
+
+Step 7: Download VS Code GPG key
+wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg
+
+Step 8: Install VS Code GPG key
+sudo install -D -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+
+Step 9: Add VS Code repository
+sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+
+Step 10: Update package list with VS Code repo
+sudo apt-get update
+
+Step 11: Install Visual Studio Code
+sudo apt-get install -y code
+
+Installation Complete!
+You now have 5 GUI applications installed:
+- GIMP (Image Editor)
+- Inkscape (Vector Graphics)
+- LibreOffice (Office Suite)
+- VLC (Media Player)
+- VS Code (Code Editor)
+
+Click "Check Installed Apps" to see them!
