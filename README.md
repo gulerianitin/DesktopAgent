@@ -1,53 +1,52 @@
-# 🧠 Desktop AI Agent
+# 🤖 Desktop Agent
 
-**Open Source AI Desktop Assistant for Linux** 🐧
+**AI-Powered Installation Assistant for Linux**
 
-A privacy-focused, local-first intelligent assistant designed for Ubuntu/XFCE that can:
-- **Organize files automatically** using Claude AI
-- **Execute shell commands** from natural language  
-- **Follow installation guides** step-by-step from URLs or text
-- **Monitor folders** and process files in real-time
-- **Safe Docker testing** with GUI application support
+An intelligent desktop assistant that automates software installation using Claude AI. Watch it install applications step-by-step in a safe Docker environment with live VNC viewing.
 
-## ✅ Features Implemented
+## 🚀 Quick Start
 
-- ✅ **File Organization** - Automatically categorizes and moves files
-- ✅ **Conversational Commands** - Natural language to shell command execution  
-- ✅ **Step-by-Step Guides** - Parse and execute installation/troubleshooting guides
-- ✅ **Real-time Monitoring** - Watch folders for new files
-- ✅ **GUI Interface** - Tkinter-based desktop application
-- ✅ **Safety Controls** - User confirmation, timeouts, comprehensive logging
+```bash
+# 1. Set your Claude API key
+echo 'CLAUDE_API_KEY=your_key_here' > .env
 
+# 2. Run the agent
+./run.sh
+```
 
+That's it! The VNC viewer will auto-connect and you'll see the Desktop Agent GUI.
+
+## ✨ Features
+
+- **AI-Powered Installation** - Parses and executes installation guides automatically
+- **Live Desktop View** - VNC connection shows real-time installation progress
+- **Safe Docker Environment** - Isolated testing prevents system damage
+- **Simple GUI** - Clean interface with one-click installation start
+- **Comprehensive Logging** - Full audit trail of all operations
 
 ## 🛠️ Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| **AI/LLM** | Claude Sonnet-4 API |
-| **GUI** | tkinter (Python native) |
-| **File Monitoring** | watchdog |
-| **Web Parsing** | requests + Claude AI |
-| **Environment** | Ubuntu 20.04+, XFCE/GNOME/KDE |
-
-
-
-
+- **AI**: Claude Sonnet-4 API
+- **GUI**: Python tkinter + XFCE desktop
+- **Container**: Docker with VNC server
+- **Security**: Command sanitization & validation
 
 ## 📁 Project Structure
 
 ```
 DesktopAgent/
+├── gui/app.py              # Main GUI application
 ├── agents/
-│   └── file_organizer.py    # File categorization logic
-├── gui/
-│   └── app.py               # Main GUI application  
+│   ├── autonomous_mode.py  # Auto-execution logic
+│   └── file_organizer.py   # File categorization
 ├── utils/
-│   ├── claude_client.py     # Claude API integration
-│   ├── command_handler.py   # Natural language commands
-│   ├── guide_parser.py      # Installation guide parser
-│   └── guide_executor.py    # Step-by-step execution
-├── main.py                  # Application entry point
+│   ├── guide_parser.py     # Installation guide parser
+│   ├── guide_executor.py   # Step execution engine
+│   ├── security.py         # Command validation
+│   └── claude_client.py    # Claude API client
+├── Dockerfile              # Desktop environment setup
+├── run.sh                  # Unified launcher script
+└── main.py                 # Application entry point
 ├── requirements.txt         # Python dependencies
 └── .env                     # Configuration (API keys)
 ```

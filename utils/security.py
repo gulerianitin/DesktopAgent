@@ -21,31 +21,31 @@ class SecureCommandExecutor:
     SAFE_COMMANDS = {
         # File operations
         'ls', 'dir', 'find', 'locate', 'grep', 'cat', 'head', 'tail', 'wc',
-        'sort', 'uniq', 'cut', 'awk', 'sed', 'diff', 'file', 'stat',
-        
-        # Directory operations  
+        'sort', 'uniq', 'cut', 'awk', 'sed', 'diff', 'file', 'stat', 'install',
+
+        # Directory operations
         'pwd', 'cd', 'mkdir', 'rmdir', 'tree',
-        
+
         # System info
         'du', 'df', 'ps', 'top', 'whoami', 'id', 'uname', 'uptime', 'date',
         'free', 'which', 'whereis', 'history',
-        
+
         # Network (limited)
-        'ping', 'wget', 'curl',
-        
+        'ping', 'wget', 'curl', 'gpg',
+
         # Package management (controlled)
-        'apt', 'snap', 'flatpak', 'pip', 'npm',
-        
+        'apt', 'apt-get', 'apt-cache', 'dpkg', 'snap', 'flatpak', 'pip', 'pip3', 'npm',
+
         # Development
-        'git', 'python', 'python3', 'node', 'npm', 'docker',
-        
-        # Media
-        'vlc', 'galculator', 'mousepad'
+        'git', 'python', 'python3', 'node', 'npm', 'docker', 'code', 'sh', 'bash', 'echo',
+
+        # Media & Apps
+        'vlc', 'galculator', 'mousepad', 'gimp', 'inkscape', 'libreoffice'
     }
     
     # Commands that require sudo
     SUDO_COMMANDS = {
-        'apt', 'snap', 'systemctl', 'service', 'mount', 'umount'
+        'apt', 'apt-get', 'dpkg', 'snap', 'systemctl', 'service', 'mount', 'umount', 'install'
     }
     
     # Dangerous patterns to block
@@ -112,24 +112,36 @@ class SecureCommandExecutor:
         try:
             # Validate command first
             self.validate_command(command)
-            
-            # Parse command safely
-            command_parts = shlex.split(command)
-            
+
             # Log sanitized command (remove potential secrets)
             sanitized_cmd = self._sanitize_for_logging(command)
             self.logger.info(f"Executing command: {sanitized_cmd}")
-            
-            # Execute with shell=False for security
-            result = subprocess.run(
-                command_parts,
-                shell=False,  # NEVER use shell=True
-                cwd=self.work_directory,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                env=self._get_safe_environment()
-            )
+
+            # For sudo/complex commands, use shell=True with bash -c
+            # This is safer than shell=True with the raw command
+            if command.strip().startswith('sudo') or '|' in command or '>' in command:
+                # Use bash -c with the command as a single string argument
+                result = subprocess.run(
+                    ['/bin/bash', '-c', command],
+                    shell=False,
+                    cwd=self.work_directory,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                    env=self._get_safe_environment()
+                )
+            else:
+                # Simple commands can use shlex.split
+                command_parts = shlex.split(command)
+                result = subprocess.run(
+                    command_parts,
+                    shell=False,
+                    cwd=self.work_directory,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                    env=self._get_safe_environment()
+                )
             
             # Sanitize output for logging
             stdout_clean = self._sanitize_for_logging(result.stdout) if result.stdout else ""
@@ -173,11 +185,13 @@ class SecureCommandExecutor:
         """Get a safe environment for command execution"""
         # Start with minimal environment
         safe_env = {
-            'PATH': '/usr/local/bin:/usr/bin:/bin',
+            'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
             'HOME': self.work_directory,
-            'USER': 'desktop-agent',
+            'USER': 'appuser',
             'LANG': 'en_US.UTF-8',
-            'TERM': 'xterm-256color'
+            'TERM': 'xterm-256color',
+            'DEBIAN_FRONTEND': 'noninteractive',  # For apt commands
+            'DISPLAY': os.environ.get('DISPLAY', ':1')  # For GUI apps
         }
         
         # Add specific variables if needed
