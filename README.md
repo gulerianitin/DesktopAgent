@@ -2,164 +2,271 @@
 
 **AI-Powered Installation Assistant for Linux**
 
-An intelligent desktop assistant that automates software installation using Claude AI. Watch it install applications step-by-step in a safe Docker environment with live VNC viewing.
+An intelligent desktop assistant that automates software installation using Claude AI. Choose between a modern web interface or the original VNC desktop environment.
+
+---
 
 ## 🚀 Quick Start
+
+### **Option 1: Web Chatbot Interface (Recommended)**
+
+Modern web interface with AI chatbot + VNC desktop side-by-side:
 
 ```bash
 # 1. Set your Claude API key
 echo 'CLAUDE_API_KEY=your_key_here' > .env
 
-# 2. Run the agent
-./run.sh
+# 2. Run the chatbot
+./run-chatbot.sh
+
+# 3. Open browser
+# http://localhost:8000
 ```
 
-That's it! The VNC viewer will auto-connect and you'll see the Desktop Agent GUI.
+**What you get:**
+- **Left panel**: AI chatbot to install apps
+- **Right panel**: VNC desktop to launch and test apps
+- **All in one browser window!**
+
+### **Option 2: Original VNC Desktop**
+
+Classic desktop environment with tkinter GUI:
+
+```bash
+# 1. Set your Claude API key
+echo 'CLAUDE_API_KEY=your_key_here' > .env
+
+# 2. Run the original interface
+./run.sh
+
+# VNC viewer will auto-connect
+```
+
+---
 
 ## ✨ Features
 
-- **AI-Powered Installation** - Parses and executes installation guides automatically
-- **Live Desktop View** - VNC connection shows real-time installation progress
-- **Safe Docker Environment** - Isolated testing prevents system damage
-- **Simple GUI** - Clean interface with one-click installation start
-- **Comprehensive Logging** - Full audit trail of all operations
+### Web Chatbot Interface
+- ✅ **Split-screen design** - Chat left, desktop right
+- ✅ **Web-based VNC** - No separate VNC client needed
+- ✅ **LangChain agent** - Autonomous reasoning and tool use
+- ✅ **Real-time viewing** - Watch apps install and launch
+- ✅ **Docker isolated** - Safe testing environment
+
+### Original Interface
+- ✅ **Classic GUI** - Tkinter-based desktop application
+- ✅ **Guide execution** - Parses installation text files
+- ✅ **VNC desktop** - Full XFCE environment
+- ✅ **Step-by-step** - Manual control over execution
+
+---
 
 ## 🛠️ Tech Stack
 
-- **AI**: Claude Sonnet-4 API
-- **GUI**: Python tkinter + XFCE desktop
+- **AI**: Claude Sonnet-4 via Anthropic API
+- **Agent Framework**: LangChain (web interface)
+- **GUI**: Python tkinter + XFCE desktop (original)
+- **Web**: FastAPI + noVNC (web interface)
 - **Container**: Docker with VNC server
-- **Security**: Command sanitization & validation
+- **Security**: Command validation & sandboxing
+
+---
 
 ## 📁 Project Structure
 
 ```
 DesktopAgent/
-├── gui/app.py              # Main GUI application
+├── chatbot.py                # ⭐ Web chatbot interface
+├── Dockerfile.chatbot        # ⭐ Web chatbot Docker config
+├── run-chatbot.sh            # ⭐ Web chatbot launcher
+│
 ├── agents/
-│   ├── autonomous_mode.py  # Auto-execution logic
-│   └── file_organizer.py   # File categorization
+│   ├── desktop_agent.py      # LangChain agent (ReAct)
+│   ├── langchain_tools.py    # Agent tools
+│   ├── autonomous_mode.py    # Auto-execution
+│   └── file_organizer.py     # File categorization
+│
 ├── utils/
-│   ├── guide_parser.py     # Installation guide parser
-│   ├── guide_executor.py   # Step execution engine
-│   ├── security.py         # Command validation
-│   └── claude_client.py    # Claude API client
-├── Dockerfile              # Desktop environment setup
-├── run.sh                  # Unified launcher script
-└── main.py                 # Application entry point
-├── requirements.txt         # Python dependencies
-└── .env                     # Configuration (API keys)
+│   ├── guide_parser.py       # Installation guide parser
+│   ├── guide_executor.py     # Step execution engine
+│   ├── security.py           # Command validation
+│   └── claude_client.py      # Claude API client
+│
+├── gui/
+│   └── app.py                # Original GUI
+│
+├── Dockerfile                # Original desktop environment
+├── run.sh                    # Original launcher
+├── main.py                   # Original entry point
+└── requirements.txt          # Python dependencies
 ```
 
-## 🚀 Quick Start
+---
 
-### One-Line Installation (Ubuntu)
+## 🎯 Usage Examples
+
+### Web Chatbot Interface
+
+1. **Open browser**: http://localhost:8000
+2. **Install apps** (left panel):
+   ```
+   Install GIMP image editor
+   Install Firefox browser
+   Install VLC media player
+   ```
+3. **Launch apps** (right panel - VNC):
+   ```bash
+   gimp &
+   firefox &
+   vlc &
+   ```
+
+### Original Interface
+
+1. **Load guide** in GUI text editor
+2. **Click** "▶ Start Installation"
+3. **Watch** in VNC window as apps install
+
+---
+
+## 🔧 Configuration
+
+Create `.env` file:
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/gulerianitin/DesktopAgent/main/install-ubuntu.sh | bash
+# Required: Claude API key
+CLAUDE_API_KEY=sk-ant-your-key-here
+
+# Optional: File organizer watch folder
+WATCH_FOLDER=/tmp/test_files
 ```
 
-### Manual Installation
+Get API key: https://console.anthropic.com/
+
+---
+
+## 🐳 Docker Commands
+
+### Web Chatbot Interface
 ```bash
-# Prerequisites
-sudo apt update && sudo apt install -y python3 python3-pip python3-tk python3-venv git docker.io
+# Start
+./run-chatbot.sh
 
-# Clone repository  
-git clone https://github.com/gulerianitin/DesktopAgent.git
-cd DesktopAgent
+# Stop
+docker stop agent-chatbot
 
-# Run installation script
-chmod +x install-ubuntu.sh
-./install-ubuntu.sh
+# Logs
+docker logs -f agent-chatbot
+
+# Access
+http://localhost:8000        # Web interface
+http://localhost:6080        # Direct noVNC access
 ```
 
-### Configuration
+### Original Interface
 ```bash
-# Create .env file
-echo "CLAUDE_API_KEY=your_claude_api_key_here" > .env
-echo "WATCH_FOLDER=/path/to/folder/to/monitor" >> .env
+# Start
+./run.sh
+
+# Stop
+docker stop desktop-agent-running
+
+# Logs
+docker logs -f desktop-agent-running
+
+# VNC
+vncviewer localhost:5901
 ```
 
-### Launch Application
+---
+
+## 📝 Example Workflow (Web Chatbot)
+
+**In Browser (Chatbot):**
+```
+You: "Setup Python development environment"
+Agent: [Analyzes request]
+       [Updates apt packages]
+       [Installs python3, pip, venv, git]
+       [Verifies installations]
+       ✅ Environment ready!
+```
+
+**In VNC Panel:**
 ```bash
-# Method 1: From applications menu (after installation)
-# Search for "Desktop Agent" in your application launcher
-
-# Method 2: Command line
-desktop-agent
-
-# Method 3: Direct execution
-python main.py
+# Test what was installed
+python3 --version
+pip3 --version
+git --version
 ```
 
-## 💡 How to Use
+---
 
-### 1. File Organization
-- Files dropped in watch folder are automatically categorized
-- AI determines appropriate folder (Documents, Images, etc.)
-- Real-time monitoring with GUI feedback
+## 🔒 Security
 
-### 2. Conversational Commands
-```
-Type: "count pdf files in home directory"
-Result: find ~ -name "*.pdf" -type f | wc -l
+Multiple security layers:
+- ✅ **Command whitelist** - Only approved commands
+- ✅ **Pattern blocking** - Blocks dangerous patterns (rm -rf /, etc.)
+- ✅ **Docker isolation** - Contained environment
+- ✅ **Input validation** - Sanitized command inputs
+- ✅ **Comprehensive logging** - Full audit trail
 
-Type: "show disk usage"  
-Result: du -sh
-```
+See `utils/security.py` and `SECURITY.md` for details.
 
-### 3. Step-by-Step Guides
-- **Load from URL**: Paste installation guide URL
-- **Load from Text**: Copy/paste installation steps
-- **Execute**: Click through steps with confirmation or "Execute All"
-- **Docker Integration**: Use `docker exec container_name command` for safe testing
-- **Examples**: VLC installation, Docker setup, Node.js installation, etc.
+---
 
+## 🚧 Requirements
 
+- **Docker** 20.10+
+- **Python** 3.10+
+- **Claude API Key**
+- **VNC Viewer** (for original interface): `tigervnc-viewer` or `remmina`
 
-## 🔒 Safe Testing with Docker (Recommended)
-
-For testing installation guides that modify system packages, use Docker sandbox:
-
-### Docker Setup
+**Install VNC viewer (optional):**
 ```bash
-# Pull Ubuntu image
-docker pull ubuntu:latest
-
-# Build sandbox container
-docker build -f Dockerfile.sandbox -t desktop-agent-sandbox .
+sudo apt install tigervnc-viewer
 ```
 
-### Safe Testing
-```bash
-# Run in isolated container
-./test-sandbox.sh
+---
 
-# Or manually:
-docker run -it --rm \
-    -e DISPLAY=$DISPLAY \
-    -v "$(pwd)":/home/testuser/app \
-    desktop-agent-sandbox
-```
+## 📚 Documentation
 
-### Why Use Docker?
-- ✅ **Complete Isolation** - No risk to host system
-- ✅ **Easy Reset** - Fresh environment for each test  
-- ✅ **GUI Support** - Applications display via WSLg
-- ✅ **Real Testing** - Authentic Ubuntu environment
-- ✅ **Professional Practice** - Industry standard for safe execution
+- `CLAUDE.md` - Instructions for Claude Code
+- `SECURITY.md` - Security architecture
+- `TODO.md` - Development roadmap
+- `desktop_agent_complete_architecture.md` - Technical details
 
-**Perfect for testing guides like:**
-- `sudo apt install` commands (VLC, Docker, Node.js, etc.)
-- System configuration changes  
-- Development environment setup
-- Database installations
-- X11 applications with GUI forwarding to Windows
+---
 
 ## 🤝 Contributing
 
-Feedback and ideas welcome! Open an issue for discussions or feature requests.
+This is an AI-assisted development project. Key components:
 
+1. **Agent**: LangChain-based autonomous agent with tool calling
+2. **Tools**: Shell execution, package management, system info
+3. **Interface**: Web-based chatbot + embedded VNC viewer
+4. **Safety**: Command validation, Docker isolation
 
+---
 
+## 📄 License
 
+See `LICENSE` file.
 
+---
+
+## 🎉 Features Comparison
+
+| Feature | Web Chatbot | Original GUI |
+|---------|-------------|--------------|
+| UI | Web browser | VNC desktop |
+| Chatbot | LangChain agent | Guide parser |
+| Viewing | In-browser | Separate VNC client |
+| Control | Natural language | Text guides |
+| Best for | Interactive use | Batch installations |
+
+---
+
+**Built with Claude Sonnet-4 + LangChain + Docker**
+
+*Modern AI-powered desktop automation*

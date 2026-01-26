@@ -4,7 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Quick Start
 
-### Running the Application
+### Running the Chatbot (Recommended)
+```bash
+# Modern web-based chat interface
+./start_chatbot.sh
+# Access at http://localhost:8000
+
+# Requires .env file with:
+# CLAUDE_API_KEY=sk-ant-your-key-here
+```
+
+### Running the Original GUI (Deprecated)
 ```bash
 # Primary method - launches Docker with VNC auto-connect
 ./run.sh
